@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Eran Grimberg — SRE Team Lead</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,700;1,300&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:        #070b0f;
+    --surface:   #0d1117;
+    --card:      #111820;
+    --border:    #1e2d3d;
+    --accent:    #00d4ff;
+    --accent2:   #00ff9d;
+    --accent3:   #ff6b35;
+    --muted:     #3d5a72;
+    --text:      #c9d8e8;
+    --dim:       #5c7d96;
+    --glow:      0 0 20px rgba(0,212,255,0.25);
+    --glow2:     0 0 20px rgba(0,255,157,0.2);
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    line-height: 1.7;
+    overflow-x: hidden;
+  }
+
+  /* ─── SCANLINES OVERLAY ──────────────────────────── */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,0,0,0.03) 2px,
+      rgba(0,0,0,0.03) 4px
+    );
+    pointer-events: none;
+    z-index: 9999;
+  }
+
+  /* ─── GRID BG ────────────────────────────────────── */
+  .grid-bg {
+    position: fixed; inset: 0;
+    background-image:
+      linear-gradient(rgba(0,212,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,212,255,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ─── NAV ────────────────────────────────────────── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0;
+    z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 48px;
+    background: rgba(7,11,15,0.85);
+    backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border);
+  }
+  .nav-logo {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 16px;
+    color: var(--accent);
+    text-decoration: none;
+    letter-spacing: 0.05em;
+  }
+  .nav-links { display: flex; gap: 32px; list-style: none; }
+  .nav-links a {
+    color: var(--dim);
+    text-decoration: none;
+    font-size: 12px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    transition: color 0.2s;
+  }
+  .nav-links a:hover { color: var(--accent); }
+  .status-dot {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 11px; color: var(--dim);
+  }
+  .dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--accent2);
+    box-shadow: 0 0 6px var(--accent2);
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.4; }
+  }
+
+  /* ─── HERO ───────────────────────────────────────── */
+  #hero {
+    position: relative;
+    min-height: 100vh;
+    display: flex; align-items: center;
+    padding: 120px 48px 80px;
+    overflow: hidden;
+  }
+
+  .hero-orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(80px);
+    pointer-events: none;
+  }
+  .orb-1 {
+    width: 500px; height: 500px;
+    background: radial-gradient(circle, rgba(0,212,255,0.08) 0%, transparent 70%);
+    top: -100px; right: -50px;
+    animation: drift 8s ease-in-out infinite;
+  }
+  .orb-2 {
+    width: 300px; height: 300px;
+    background: radial-gradient(circle, rgba(0,255,157,0.06) 0%, transparent 70%);
+    bottom: 50px; left: 200px;
+    animation: drift 12s ease-in-out infinite reverse;
+  }
+  @keyframes drift {
+    0%, 100% { transform: translate(0,0); }
+    50%       { transform: translate(20px, -30px); }
+  }
+
+  .hero-content { position: relative; z-index: 2; max-width: 800px; }
+
+  .hero-prompt {
+    font-size: 11px;
+    color: var(--accent2);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+    opacity: 0;
+    animation: fadeUp 0.6s 0.2s forwards;
+  }
+  .hero-prompt::before { content: '▶  '; }
+
+  .hero-name {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(52px, 8vw, 96px);
+    font-weight: 800;
+    line-height: 0.95;
+    letter-spacing: -0.03em;
+    color: #fff;
+    margin-bottom: 8px;
+    opacity: 0;
+    animation: fadeUp 0.6s 0.35s forwards;
+  }
+  .hero-name span { color: var(--accent); }
+
+  .hero-title {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(18px, 3vw, 28px);
+    font-weight: 600;
+    color: var(--dim);
+    margin-bottom: 32px;
+    opacity: 0;
+    animation: fadeUp 0.6s 0.5s forwards;
+  }
+
+  .hero-terminal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px 24px;
+    max-width: 560px;
+    margin-bottom: 40px;
+    opacity: 0;
+    animation: fadeUp 0.6s 0.65s forwards;
+  }
+  .terminal-bar {
+    display: flex; gap: 6px; margin-bottom: 16px;
+  }
+  .t-dot {
+    width: 10px; height: 10px; border-radius: 50%;
+  }
+  .t-dot.red   { background: #ff5f57; }
+  .t-dot.yellow{ background: #ffbd2e; }
+  .t-dot.green { background: #28c940; }
+  .terminal-line { margin-bottom: 4px; }
+  .cmd { color: var(--accent2); }
+  .path { color: var(--accent); }
+  .out { color: var(--dim); }
+  .cursor {
+    display: inline-block;
+    width: 8px; height: 14px;
+    background: var(--accent);
+    vertical-align: middle;
+    animation: blink 1.1s step-end infinite;
+  }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+  .hero-cta {
+    display: flex; gap: 16px; flex-wrap: wrap;
+    opacity: 0;
+    animation: fadeUp 0.6s 0.8s forwards;
+  }
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 12px 24px;
+    border-radius: 6px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-decoration: none;
+    transition: all 0.2s;
+    cursor: pointer;
+  }
+  .btn-primary {
+    background: var(--accent);
+    color: #000;
+    border: none;
+    box-shadow: 0 0 20px rgba(0,212,255,0.3);
+  }
+  .btn-primary:hover {
+    background: #fff;
+    box-shadow: 0 0 30px rgba(0,212,255,0.5);
+    transform: translateY(-2px);
+  }
+  .btn-outline {
+    background: transparent;
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+  .btn-outline:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    transform: translateY(-2px);
+  }
+
+  .hero-stats {
+    position: absolute; right: 48px; bottom: 60px;
+    display: flex; flex-direction: column; gap: 20px;
+    opacity: 0;
+    animation: fadeUp 0.6s 1s forwards;
+  }
+  .stat-item { text-align: right; }
+  .stat-num {
+    font-family: 'Syne', sans-serif;
+    font-size: 28px; font-weight: 800;
+    color: var(--accent);
+    line-height: 1;
+  }
+  .stat-label { font-size: 10px; color: var(--dim); letter-spacing: 0.1em; text-transform: uppercase; }
+
+  /* ─── SECTION BASE ───────────────────────────────── */
+  section {
+    position: relative; z-index: 2;
+    padding: 100px 48px;
+  }
+  .section-header {
+    display: flex; align-items: center; gap: 16px;
+    margin-bottom: 60px;
+  }
+  .section-tag {
+    font-size: 10px; letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--accent);
+    border: 1px solid rgba(0,212,255,0.3);
+    padding: 4px 10px;
+    border-radius: 3px;
+  }
+  .section-title {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(28px, 4vw, 42px);
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: -0.02em;
+  }
+  .section-line {
+    flex: 1; height: 1px;
+    background: linear-gradient(90deg, var(--border), transparent);
+  }
+
+  /* ─── ABOUT ──────────────────────────────────────── */
+  #about { background: var(--surface); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+  .about-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 60px;
+    align-items: start;
+  }
+  .about-bio {
+    font-size: 15px;
+    color: var(--text);
+    line-height: 1.9;
+  }
+  .about-bio p + p { margin-top: 20px; }
+  .about-bio strong { color: var(--accent); font-weight: 500; }
+
+  .about-panels { display: flex; flex-direction: column; gap: 16px; }
+  .info-panel {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .info-panel:hover {
+    border-color: rgba(0,212,255,0.3);
+    box-shadow: var(--glow);
+  }
+  .info-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.15em; color: var(--dim); margin-bottom: 6px; }
+  .info-value { font-size: 14px; color: var(--text); }
+  .info-value a { color: var(--accent); text-decoration: none; }
+  .info-value a:hover { text-decoration: underline; }
+
+  /* ─── SKILLS ─────────────────────────────────────── */
+  #skills { }
+  .skills-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+  }
+  .skill-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 24px;
+    transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+  }
+  .skill-card:hover {
+    transform: translateY(-4px);
+    border-color: rgba(0,212,255,0.3);
+    box-shadow: var(--glow);
+  }
+  .skill-card-header {
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 16px;
+  }
+  .skill-icon {
+    width: 36px; height: 36px;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+  .skill-card-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 14px; font-weight: 700;
+    color: #fff;
+  }
+  .skill-tags {
+    display: flex; flex-wrap: wrap; gap: 6px;
+  }
+  .tag {
+    font-size: 10px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    color: var(--dim);
+    letter-spacing: 0.05em;
+    transition: all 0.15s;
+  }
+  .skill-card:hover .tag {
+    border-color: rgba(0,212,255,0.2);
+    color: var(--text);
+  }
+
+  /* ─── EXPERIENCE ─────────────────────────────────── */
+  #experience { background: var(--surface); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+  .timeline {
+    position: relative;
+    padding-left: 40px;
+  }
+  .timeline::before {
+    content: '';
+    position: absolute; left: 0; top: 8px; bottom: 8px;
+    width: 1px;
+    background: linear-gradient(180deg, var(--accent), var(--border), transparent);
+  }
+  .job {
+    position: relative;
+    margin-bottom: 48px;
+    padding: 28px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .job:hover {
+    border-color: rgba(0,212,255,0.3);
+    box-shadow: var(--glow);
+  }
+  .job::before {
+    content: '';
+    position: absolute;
+    left: -49px; top: 30px;
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 10px var(--accent);
+    border: 2px solid var(--bg);
+  }
+  .job-header {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    flex-wrap: wrap; gap: 12px;
+    margin-bottom: 16px;
+  }
+  .job-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 18px; font-weight: 700;
+    color: #fff;
+  }
+  .job-company {
+    font-size: 13px; color: var(--accent);
+    margin-top: 4px;
+  }
+  .job-period {
+    font-size: 11px;
+    color: var(--dim);
+    padding: 4px 10px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    white-space: nowrap;
+    align-self: flex-start;
+  }
+  .job-desc {
+    font-size: 13px;
+    color: var(--text);
+    line-height: 1.8;
+    margin-bottom: 16px;
+  }
+  .job-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+  .job-tag {
+    font-size: 10px;
+    padding: 3px 8px;
+    background: rgba(0,212,255,0.06);
+    border: 1px solid rgba(0,212,255,0.15);
+    border-radius: 4px;
+    color: var(--accent);
+    letter-spacing: 0.05em;
+  }
+
+  /* ─── FOOTER ─────────────────────────────────────── */
+  footer {
+    position: relative; z-index: 2;
+    padding: 48px;
+    border-top: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 24px;
+  }
+  .footer-left { font-size: 12px; color: var(--dim); }
+  .footer-left span { color: var(--accent); }
+  .footer-links { display: flex; gap: 16px; }
+  .footer-link {
+    display: flex; align-items: center; justify-content: center;
+    width: 38px; height: 38px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--dim);
+    text-decoration: none;
+    font-size: 14px;
+    transition: all 0.2s;
+  }
+  .footer-link:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    box-shadow: var(--glow);
+    transform: translateY(-2px);
+  }
+
+  /* ─── ANIMATIONS ─────────────────────────────────── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .reveal {
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+  }
+  .reveal.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* ─── RESPONSIVE ─────────────────────────────────── */
+  @media (max-width: 900px) {
+    nav { padding: 14px 24px; }
+    .nav-links { display: none; }
+    #hero, section, footer { padding-left: 24px; padding-right: 24px; }
+    .hero-stats { display: none; }
+    .about-grid { grid-template-columns: 1fr; }
+    .hero-name { font-size: clamp(40px, 12vw, 64px); }
+  }
+</style>
+</head>
+<body>
+
+<div class="grid-bg"></div>
+
+<!-- NAV -->
+<nav>
+  <a class="nav-logo" href="#">eran.grimberg</a>
+  <ul class="nav-links">
+    <li><a href="#about">about</a></li>
+    <li><a href="#skills">skills</a></li>
+    <li><a href="#experience">experience</a></li>
+  </ul>
+  <div class="status-dot">
+    <span class="dot"></span>
+    <span>available for opportunities</span>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="hero-orb orb-1"></div>
+  <div class="hero-orb orb-2"></div>
+
+  <div class="hero-content">
+    <div class="hero-prompt">eran.grimberg ~ sre_team_lead</div>
+
+    <h1 class="hero-name">Eran<br><span>Grimberg</span></h1>
+    <div class="hero-title">SRE Team Lead</div>
+
+    <div class="hero-terminal">
+      <div class="terminal-bar">
+        <div class="t-dot red"></div>
+        <div class="t-dot yellow"></div>
+        <div class="t-dot green"></div>
+      </div>
+      <div class="terminal-line">
+        <span class="path">~/profile</span>
+        <span class="out"> $ </span>
+        <span class="cmd">whoami</span>
+      </div>
+      <div class="terminal-line" style="margin-top:8px;">
+        <span class="out">→  SRE Team Lead who turns chaos into uptime.</span>
+      </div>
+      <div class="terminal-line">
+        <span class="out">→  Building reliable systems, leading high-performing teams.</span>
+      </div>
+      <div class="terminal-line">
+        <span class="out">→  Obsessed with automation, observability, and SLOs.</span>
+      </div>
+      <div class="terminal-line" style="margin-top:10px;">
+        <span class="path">~/profile</span>
+        <span class="out"> $ </span>
+        <span class="cursor"></span>
+      </div>
+    </div>
+
+    <div class="hero-cta">
+      <a class="btn btn-primary" href="https://www.linkedin.com/in/erangrimberg" target="_blank">
+        ↗ LinkedIn Profile
+      </a>
+      <a class="btn btn-outline" href="#experience">
+        $ view experience
+      </a>
+    </div>
+  </div>
+
+  <div class="hero-stats">
+    <div class="stat-item">
+      <div class="stat-num">99.9<span style="font-size:16px;color:var(--dim)">%</span></div>
+      <div class="stat-label">uptime target</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num">∞</div>
+      <div class="stat-label">automation first</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num">0</div>
+      <div class="stat-label">toil tolerance</div>
+    </div>
+  </div>
+</section>
+
+<!-- ABOUT -->
+<section id="about">
+  <div class="section-header reveal">
+    <div class="section-tag">// 01</div>
+    <h2 class="section-title">about_me</h2>
+    <div class="section-line"></div>
+  </div>
+
+  <div class="about-grid">
+    <div class="about-bio reveal">
+      <p>
+        I'm <strong>Eran Grimberg</strong>, an SRE Team Lead with deep expertise in building and operating 
+        reliable, scalable infrastructure. I bridge the gap between engineering and operations — 
+        leading teams that treat reliability as a feature, not an afterthought.
+      </p>
+      <p>
+        My work spans <strong>incident management</strong>, <strong>capacity planning</strong>, 
+        <strong>CI/CD pipelines</strong>, and embedding <strong>SLO-driven culture</strong> across 
+        engineering organizations. I believe the best systems are the ones that heal themselves.
+      </p>
+      <p>
+        As a team lead, I invest heavily in <strong>mentoring engineers</strong>, reducing toil through 
+        intelligent automation, and building the kind of on-call culture where engineers can sleep 
+        at night — because the alerts actually mean something.
+      </p>
+    </div>
+
+    <div class="about-panels reveal">
+      <div class="info-panel">
+        <div class="info-label">role</div>
+        <div class="info-value">SRE Team Lead</div>
+      </div>
+      <div class="info-panel">
+        <div class="info-label">focus areas</div>
+        <div class="info-value">Reliability · Observability · Automation</div>
+      </div>
+      <div class="info-panel">
+        <div class="info-label">linkedin</div>
+        <div class="info-value"><a href="https://www.linkedin.com/in/erangrimberg" target="_blank">linkedin.com/in/erangrimberg ↗</a></div>
+      </div>
+      <div class="info-panel">
+        <div class="info-label">philosophy</div>
+        <div class="info-value">"If it's painful, do it more often until it stops hurting."</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SKILLS -->
+<section id="skills">
+  <div class="section-header reveal">
+    <div class="section-tag">// 02</div>
+    <h2 class="section-title">tech_stack</h2>
+    <div class="section-line"></div>
+  </div>
+
+  <div class="skills-grid">
+    <div class="skill-card reveal">
+      <div class="skill-card-header">
+        <div class="skill-icon" style="background:rgba(0,212,255,0.1);">☁️</div>
+        <div class="skill-card-title">Cloud & Infrastructure</div>
+      </div>
+      <div class="skill-tags">
+        <span class="tag">AWS</span>
+        <span class="tag">GCP</span>
+        <span class="tag">Azure</span>
+        <span class="tag">Terraform</span>
+        <span class="tag">Pulumi</span>
+        <span class="tag">CloudFormation</span>
+      </div>
+    </div>
+
+    <div class="skill-card reveal">
+      <div class="skill-card-header">
+        <div class="skill-icon" style="background:rgba(0,255,157,0.1);">🔧</div>
+        <div class="skill-card-title">Container & Orchestration</div>
+      </div>
+      <div class="skill-tags">
+        <span class="tag">Kubernetes</span>
+        <span class="tag">Docker</span>
+        <span class="tag">Helm</span>
+        <span class="tag">Argo CD</span>
+        <span class="tag">Istio</span>
+        <span class="tag">EKS</span>
+      </div>
+    </div>
+
+    <div class="skill-card reveal">
+      <div class="skill-card-header">
+        <div class="skill-icon" style="background:rgba(255,107,53,0.1);">📊</div>
+        <div class="skill-card-title">Observability</div>
+      </div>
+      <div class="skill-tags">
+        <span class="tag">Prometheus</span>
+        <span class="tag">Grafana</span>
+        <span class="tag">Datadog</span>
+        <span class="tag">ELK Stack</span>
+        <span class="tag">OpenTelemetry</span>
+        <span class="tag">PagerDuty</span>
+      </div>
+    </div>
+
+    <div class="skill-card reveal">
+      <div class="skill-card-header">
+        <div class="skill-icon" style="background:rgba(0,212,255,0.1);">🚀</div>
+        <div class="skill-card-title">CI/CD & Automation</div>
+      </div>
+      <div class="skill-tags">
+        <span class="tag">GitHub Actions</span>
+        <span class="tag">Jenkins</span>
+        <span class="tag">GitLab CI</span>
+        <span class="tag">Ansible</span>
+        <span class="tag">ArgoCD</span>
+        <span class="tag">Flux</span>
+      </div>
+    </div>
+
+    <div class="skill-card reveal">
+      <div class="skill-card-header">
+        <div class="skill-icon" style="background:rgba(0,255,157,0.1);">💻</div>
+        <div class="skill-card-title">Languages & Scripting</div>
+      </div>
+      <div class="skill-tags">
+        <span class="tag">Python</span>
+        <span class="tag">Bash</span>
+        <span class="tag">Go</span>
+        <span class="tag">YAML</span>
+        <span class="tag">SQL</span>
+        <span class="tag">HCL</span>
+      </div>
+    </div>
+
+    <div class="skill-card reveal">
+      <div class="skill-card-header">
+        <div class="skill-icon" style="background:rgba(255,107,53,0.1);">🛡️</div>
+        <div class="skill-card-title">SRE Practices</div>
+      </div>
+      <div class="skill-tags">
+        <span class="tag">SLOs / SLAs</span>
+        <span class="tag">Error Budgets</span>
+        <span class="tag">Incident Mgmt</span>
+        <span class="tag">Chaos Engineering</span>
+        <span class="tag">Postmortems</span>
+        <span class="tag">Toil Reduction</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- EXPERIENCE -->
+<section id="experience">
+  <div class="section-header reveal">
+    <div class="section-tag">// 03</div>
+    <h2 class="section-title">experience</h2>
+    <div class="section-line"></div>
+  </div>
+
+  <div class="timeline">
+    <div class="job reveal">
+      <div class="job-header">
+        <div>
+          <div class="job-title">SRE Team Lead</div>
+          <div class="job-company">Current Position</div>
+        </div>
+        <div class="job-period">Present</div>
+      </div>
+      <div class="job-desc">
+        Leading a team of site reliability engineers responsible for the availability, performance, and scalability of production systems. 
+        Driving the adoption of SLO-based reliability targets and error budget policies across engineering teams. 
+        Architecting incident response processes, runbooks, and post-mortem culture to minimize MTTR and prevent recurrence.
+      </div>
+      <div class="job-tags">
+        <span class="job-tag">Kubernetes</span>
+        <span class="job-tag">Terraform</span>
+        <span class="job-tag">Prometheus</span>
+        <span class="job-tag">Incident Management</span>
+        <span class="job-tag">Team Leadership</span>
+      </div>
+    </div>
+
+    <div class="job reveal">
+      <div class="job-header">
+        <div>
+          <div class="job-title">Site Reliability Engineer</div>
+          <div class="job-company">Previous Role</div>
+        </div>
+        <div class="job-period">Prior Experience</div>
+      </div>
+      <div class="job-desc">
+        Designed and implemented scalable infrastructure on cloud platforms. Built monitoring and alerting frameworks 
+        to improve observability across distributed systems. Automated repetitive operational tasks to reduce toil 
+        and free up engineering bandwidth for high-impact work.
+      </div>
+      <div class="job-tags">
+        <span class="job-tag">AWS</span>
+        <span class="job-tag">Docker</span>
+        <span class="job-tag">CI/CD</span>
+        <span class="job-tag">Python</span>
+        <span class="job-tag">Automation</span>
+      </div>
+    </div>
+
+    <div class="job reveal">
+      <div class="job-header">
+        <div>
+          <div class="job-title">DevOps Engineer</div>
+          <div class="job-company">Early Career</div>
+        </div>
+        <div class="job-period">Foundation</div>
+      </div>
+      <div class="job-desc">
+        Laid the groundwork in infrastructure engineering — building CI/CD pipelines, containerizing applications, 
+        and supporting development teams with platform and tooling expertise. Developed a systems-thinking mindset 
+        that became the foundation for the SRE discipline.
+      </div>
+      <div class="job-tags">
+        <span class="job-tag">Linux</span>
+        <span class="job-tag">Bash</span>
+        <span class="job-tag">Jenkins</span>
+        <span class="job-tag">Ansible</span>
+        <span class="job-tag">Git</span>
+      </div>
+    </div>
+  </div>
+
+  <div style="text-align:center; margin-top: 24px;" class="reveal">
+    <a class="btn btn-outline" href="https://www.linkedin.com/in/erangrimberg" target="_blank" style="display:inline-flex;">
+      ↗ Full work history on LinkedIn
+    </a>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-left">
+    <span>eran.grimberg</span> — SRE Team Lead<br>
+    <span style="color:var(--dim);font-size:11px;">built with ❤️ &amp; terminal aesthetics</span>
+  </div>
+  <div class="footer-links">
+    <a class="footer-link" href="https://www.linkedin.com/in/erangrimberg" target="_blank" title="LinkedIn">
+      in
+    </a>
+    <a class="footer-link" href="/cdn-cgi/l/email-protection#bfdacdded1ffdac7ded2cfd3da91dcd0d2" title="Email">
+      @
+    </a>
+  </div>
+</footer>
+
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+  // Scroll reveal
+  const reveals = document.querySelectorAll('.reveal');
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach((entry, i) => {
+      if (entry.isIntersecting) {
+        setTimeout(() => {
+          entry.target.classList.add('visible');
+        }, 80 * (Array.from(entry.target.parentElement?.children || []).indexOf(entry.target) || 0));
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.1 });
+  reveals.forEach(el => observer.observe(el));
+
+  // Typewriter for terminal
+  const lines = [
+    { el: null, text: "→  SRE Team Lead who turns chaos into uptime.", delay: 800 },
+  ];
+
+  // Smooth stagger on skill cards
+  document.q
